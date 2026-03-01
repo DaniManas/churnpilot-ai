@@ -1,0 +1,50 @@
+version: "3.9"
+
+# ── ML AI Platform — local development stack ──────────────────────────────────
+#
+# Usage:
+#   docker compose up --build          # start everything
+#   docker compose up --build -d       # start in background
+#   docker compose logs -f api         # tail logs
+#   docker compose down -v             # stop and remove volumes
+#
+# The SQLite DB and batch results are stored in a named volume so data
+# persists across container restarts.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-platform-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Copy .env.example to .env and set real values before running
+      - VALID_API_KEYS=${VALID_API_KEYS:-dev-key-123}
+      - DATABASE_URL=sqlite:////data/predictions.db
+      - MODEL_PATH=/app/ml/artifacts/model.pkl
+      - METADATA_PATH=/app/ml/artifacts/model_metadata.json
+      - FAISS_INDEX_PATH=/app/data/faiss_index
+      - DOCS_PATH=/app/data/docs
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-local}
+      - LLM_PROVIDER=${LLM_PROVIDER:-local}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - RATE_LIMIT=${RATE_LIMIT:-20/minute}
+    volumes:
+      # Persistent storage for the SQLite DB and batch result CSVs
+      - ml_data:/data
+      # Mount model artifacts from host so you can retrain without rebuilding
+      - ./ml/artifacts:/app/ml/artifacts:ro
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  ml_data:
+    driver: local

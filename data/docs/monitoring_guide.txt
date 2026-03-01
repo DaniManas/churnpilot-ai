@@ -1,0 +1,39 @@
+MODEL MONITORING GUIDE
+=======================
+
+WHY MONITOR A MODEL IN PRODUCTION?
+A machine learning model is only as good as its training data. When real-world data starts to look different from the training data — a phenomenon called data drift — the model's predictions become unreliable without any error or warning. Monitoring catches this before accuracy degrades.
+
+WHAT IS DATA DRIFT?
+Data drift occurs when the statistical distribution of input features changes over time. For example, if the platform starts receiving predictions for customers with unusually high monthly charges compared to the training data, the model may underperform on those cases. The model has never seen that part of the feature space during training.
+
+WHAT IS PSI (POPULATION STABILITY INDEX)?
+PSI is the standard metric for measuring data drift in production ML systems. It compares two distributions using the formula:
+  PSI = sum((actual% - expected%) × ln(actual% / expected%))
+where "expected" is the training distribution and "actual" is the live distribution.
+
+PSI THRESHOLDS
+  PSI below 0.10: Stable. The live data looks like the training data. No action needed.
+  PSI between 0.10 and 0.20: Warning. There is a noticeable shift. Investigate the source of change.
+  PSI above 0.20: Drift detected. The distribution has shifted significantly. Consider retraining the model.
+
+WHICH FEATURES ARE MONITORED?
+The platform monitors PSI for the three numeric features: tenure, monthly_charges, and total_charges. These are the features most likely to drift over time as the customer base evolves. Categorical features (contract type, payment method) are not yet included but are planned.
+
+HOW TO USE THE MONITORING ENDPOINT
+Call GET /monitor with an optional window_days parameter (default 7 days). The response shows:
+- A breakdown of all predictions in the window (total count, churn rate, risk distribution)
+- PSI scores for each monitored feature
+- An overall drift status summarising the worst individual score
+
+RECOMMENDED MONITORING WORKFLOW
+1. Set up a daily job to call GET /monitor?window_days=7 and log the results.
+2. Alert if overall_drift_status changes to "warning" or "drift".
+3. When drift is detected, compare the live feature distributions to training distributions to identify which segment of customers is driving the change.
+4. If drift persists for more than a week, retrain the model with more recent data.
+
+HOW BASELINES ARE STORED
+At training time, the model training script (ml/train.py) captures the histogram of each numeric feature across the training dataset and stores it in ml/artifacts/model_metadata.json. The monitoring service reads these baseline histograms at runtime and uses the same bin edges to histogram the live data, making the PSI calculation consistent.
+
+WHAT MONITORING DOES NOT DETECT
+PSI measures input feature drift, not output drift. A separate check on the overall churn rate trend (visible in the prediction_distribution section of the monitor response) gives a proxy for concept drift — when the relationship between features and churn itself changes. If the churn rate in live predictions deviates significantly from the 26.5% training baseline, that is a signal to investigate even if PSI scores are low.

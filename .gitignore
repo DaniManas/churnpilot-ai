@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual envs
+.venv/
+venv/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Private docs
+INTERVIEW_PREP.md
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Data/runtime artifacts
+data/predictions.db
+data/batch_results/
+data/faiss_index/
+pytest-cache-files-*/
+
+# Notebook checkpoints
+.ipynb_checkpoints/

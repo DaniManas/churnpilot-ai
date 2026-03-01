@@ -1,0 +1,105 @@
+API REFERENCE — ML AI PLATFORM
+================================
+
+AUTHENTICATION
+All endpoints except /health require an API key passed in the request header:
+  X-API-Key: your-key-here
+
+Missing or invalid keys return HTTP 401. Keys are managed via the VALID_API_KEYS environment variable (comma-separated list).
+
+ENDPOINTS
+
+GET /health
+Returns the health status of all subsystems. No authentication required.
+Response fields:
+  status: "ok" if everything is healthy, "degraded" if the DB or model has issues
+  app_version: the deployed application version
+  model_version: the version of the loaded ML model
+  db_connected: true if the database is reachable
+  rag_index_ready: true if the FAISS vector index has been built
+  uptime_seconds: how long the process has been running
+  total_requests: total number of predictions logged
+
+POST /predict
+Submit one customer record and receive a churn prediction.
+Request body (JSON):
+  tenure: integer, 0-72 (months as a customer)
+  monthly_charges: float, 0-200 (monthly bill in USD)
+  total_charges: float, 0+ (cumulative billing)
+  contract: "Month-to-month" | "One year" | "Two year"
+  internet_service: "DSL" | "Fiber optic" | "No"
+  payment_method: "Electronic check" | "Mailed check" | "Bank transfer" | "Credit card"
+  senior_citizen: boolean
+  partner: boolean
+  dependents: boolean
+  phone_service: boolean
+  paperless_billing: boolean
+Response fields:
+  request_id: unique ID for this prediction (use for support/debugging)
+  prediction: 0 (will not churn) or 1 (will churn)
+  probability: float between 0 and 1 (churn probability)
+  risk_label: "Low" | "Medium" | "High"
+  model_version: the model version used
+  latency_ms: inference time in milliseconds
+
+POST /batch
+Upload a CSV file for batch scoring. Returns a job_id immediately — processing happens in the background.
+Request: multipart/form-data with a CSV file in the "file" field.
+The CSV must contain columns matching the /predict request fields.
+Response fields:
+  job_id: unique identifier for the batch job
+  status: always "pending" at submission time
+  message: instructions for polling
+  created_at: timestamp of job creation
+
+GET /batch/{job_id}
+Check the status of a batch job.
+Response fields:
+  job_id: the job identifier
+  status: "pending" | "processing" | "done" | "failed"
+  total_records: number of rows in the CSV (filled once parsing starts)
+  processed_records: number of rows scored so far
+  created_at: when the job was submitted
+  completed_at: when the job finished (null if still running)
+  download_url: path to download results (only present when status is "done")
+  error_message: error description (only present when status is "failed")
+
+GET /batch/{job_id}/download
+Download the scored CSV. Only available when job status is "done".
+Returns a CSV file with three additional columns appended:
+  churn_prediction: 0 or 1
+  churn_probability: float between 0 and 1
+  risk_label: "Low" | "Medium" | "High"
+
+GET /monitor
+Returns model monitoring metrics for the past N days.
+Query parameters:
+  window_days: integer, 1-90, default 7
+Response fields:
+  model_version: the model being monitored
+  window_days: the number of days analysed
+  prediction_distribution: breakdown of predictions (churn count, risk tiers, average probability)
+  feature_drift: list of PSI scores per feature (tenure, monthly_charges, total_charges)
+  overall_drift_status: "stable" | "warning" | "drift"
+
+POST /assist
+Ask a question in plain English. Returns an answer generated from the knowledge base.
+Request body (JSON):
+  question: string, minimum 5 characters
+  top_k: integer, 1-10, default 3 (number of knowledge base chunks to retrieve)
+Response fields:
+  request_id: unique ID for this request
+  answer: the generated answer
+  citations: list of document chunks used to generate the answer
+    (each citation has doc_id, chunk_id, source, snippet, score)
+  retrieval_latency_ms: time to retrieve chunks from FAISS
+  llm_latency_ms: time to generate the answer
+  model_used: which model generated the answer
+
+ERROR CODES
+  400 Bad Request: invalid file format or empty upload
+  401 Unauthorized: missing or invalid API key
+  404 Not Found: job_id does not exist
+  409 Conflict: batch job not yet complete
+  422 Unprocessable Entity: request body failed Pydantic validation
+  500 Internal Server Error: model inference or DB failure

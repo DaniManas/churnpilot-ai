@@ -1,0 +1,42 @@
+CHURN PREDICTION MODEL GUIDE
+==============================
+
+WHAT THE MODEL DOES
+The churn prediction model estimates the probability that a telecom customer will cancel their service in the near future. It outputs a probability between 0 and 1 and assigns a risk tier: Low (below 0.4), Medium (0.4 to 0.7), or High (above 0.7).
+
+HOW THE MODEL WAS TRAINED
+The model is a RandomForestClassifier trained on the IBM Telco Customer Churn dataset, which contains 7,043 real customer records. The training set had 5,634 examples and the test set had 1,409 examples. The churn rate in the training data was approximately 26.5%, meaning about one in four customers had churned.
+
+The model achieved a ROC-AUC score of 0.8429 on the test set. ROC-AUC measures how well the model distinguishes churners from non-churners across all possible decision thresholds. A score of 0.5 is random guessing and 1.0 is perfect — 0.84 is a strong baseline.
+
+FEATURES USED
+The model uses 11 features:
+- tenure: how many months the customer has been with the company (0-72)
+- monthly_charges: the customer's current monthly bill in USD
+- total_charges: the total amount billed to the customer to date
+- contract: the type of contract (Month-to-month, One year, Two year)
+- internet_service: the type of internet service (DSL, Fiber optic, No)
+- payment_method: how the customer pays (Electronic check, Mailed check, Bank transfer, Credit card)
+- senior_citizen: whether the customer is a senior citizen (true/false)
+- partner: whether the customer has a partner (true/false)
+- dependents: whether the customer has dependents (true/false)
+- phone_service: whether the customer has phone service (true/false)
+- paperless_billing: whether the customer is enrolled in paperless billing (true/false)
+
+WHAT DRIVES HIGH CHURN RISK
+Based on the training data, the strongest predictors of churn are:
+1. Short tenure — customers in their first few months are much more likely to churn
+2. Month-to-month contract — no long-term commitment means easier to leave
+3. High monthly charges — especially on Fiber optic internet without a long-term contract
+4. Electronic check payment — correlated with higher churn in the dataset
+5. No partner and no dependents — single customers churn more often
+
+RISK TIERS
+Low risk (probability below 0.4): Customer is likely to stay. No immediate action required.
+Medium risk (probability 0.4 to 0.7): Customer is at moderate risk. Consider a proactive retention offer.
+High risk (probability above 0.7): Customer is very likely to churn. Prioritise for immediate outreach.
+
+WHAT THE MODEL CANNOT DO
+The model was trained on historical data. It cannot account for recent events such as a service outage, a competitor's new promotion, or a customer's change in circumstances. Predictions should be used as one signal among many, not as a definitive answer.
+
+The model does not explain why a specific customer is at risk — it only gives a probability. For explanations, use feature importance analysis or SHAP values (not yet implemented in this version).

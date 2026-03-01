@@ -1,0 +1,137 @@
+{
+  "model_version": "1.0.0",
+  "trained_at": "2026-03-01T20:12:18.949367",
+  "data_source": "IBM Telco Customer Churn (real)",
+  "algorithm": "RandomForestClassifier",
+  "n_estimators": 200,
+  "features": [
+    "tenure",
+    "monthly_charges",
+    "total_charges",
+    "contract",
+    "internet_service",
+    "payment_method",
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "phone_service",
+    "paperless_billing"
+  ],
+  "numeric_features": [
+    "tenure",
+    "monthly_charges",
+    "total_charges"
+  ],
+  "categorical_features": [
+    "contract",
+    "internet_service",
+    "payment_method"
+  ],
+  "binary_features": [
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "phone_service",
+    "paperless_billing"
+  ],
+  "target": "churn",
+  "roc_auc_score": 0.8428,
+  "train_samples": 5634,
+  "test_samples": 1409,
+  "churn_rate_train": 0.2654,
+  "baseline_distributions": {
+    "tenure": {
+      "bin_edges": [
+        0.0,
+        7.2,
+        14.4,
+        21.6,
+        28.8,
+        36.0,
+        43.2,
+        50.4,
+        57.6,
+        64.8,
+        72.0
+      ],
+      "counts": [
+        1270,
+        621,
+        451,
+        439,
+        403,
+        401,
+        361,
+        395,
+        382,
+        911
+      ],
+      "mean": 32.48509052183174,
+      "std": 24.56874351182127,
+      "min": 0.0,
+      "max": 72.0
+    },
+    "monthly_charges": {
+      "bin_edges": [
+        18.4,
+        28.435,
+        38.47,
+        48.504999999999995,
+        58.54,
+        68.57499999999999,
+        78.61,
+        88.64500000000001,
+        98.68,
+        108.715,
+        118.75
+      ],
+      "counts": [
+        1277,
+        155,
+        306,
+        497,
+        374,
+        695,
+        783,
+        695,
+        616,
+        236
+      ],
+      "mean": 64.92996095136671,
+      "std": 30.138105357938493,
+      "min": 18.4,
+      "max": 118.75
+    },
+    "total_charges": {
+      "bin_edges": [
+        0.0,
+        868.4799999999999,
+        1736.9599999999998,
+        2605.4399999999996,
+        3473.9199999999996,
+        4342.4,
+        5210.879999999999,
+        6079.36,
+        6947.839999999999,
+        7816.319999999999,
+        8684.8
+      ],
+      "counts": [
+        2157,
+        973,
+        529,
+        406,
+        380,
+        331,
+        324,
+        247,
+        187,
+        100
+      ],
+      "mean": 2299.33468228612,
+      "std": 2279.2042777725756,
+      "min": 0.0,
+      "max": 8684.8
+    }
+  }
+}
