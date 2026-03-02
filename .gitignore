@@ -32,5 +32,9 @@ data/batch_results/
 data/faiss_index/
 pytest-cache-files-*/
 
+# ML artifacts (large binary — regenerate with: python ml/train.py)
+ml/artifacts/model.pkl
+ml/artifacts/scaler.pkl
+
 # Notebook checkpoints
 .ipynb_checkpoints/

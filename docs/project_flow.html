@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChurnPilot AI — Architecture &amp; Flow</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #4ecdc4;
+      --accent3: #ff6b6b;
+      --accent4: #ffd93d;
+      --text: #e8eaf6;
+      --muted: #8892b0;
+      --green: #64ffda;
+      --card-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0f1117 0%, #1a1d27 40%, #12122a 100%);
+      padding: 64px 24px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(108,99,255,0.18), transparent);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.4);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero-links {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all .2s;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+    }
+    .btn-primary:hover { background: #7c74ff; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+    /* ── Metrics bar ── */
+    .metrics-bar {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+      padding: 28px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .metric {
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .section { margin-bottom: 72px; }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+    .section-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(108,99,255,0.2);
+      border: 1px solid rgba(108,99,255,0.5);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* ── Architecture flow ── */
+    .arch-flow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .arch-node {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      min-width: 160px;
+      max-width: 200px;
+      text-align: center;
+      position: relative;
+      transition: transform .2s, border-color .2s;
+    }
+    .arch-node:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+    }
+    .arch-node-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .arch-node-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .arch-node-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .arch-arrow {
+      display: flex; align-items: center; padding: 0 4px;
+      color: var(--accent);
+      font-size: 20px;
+      font-weight: 300;
+      flex-shrink: 0;
+      align-self: center;
+    }
+
+    /* ── Pipeline steps ── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
+    }
+    .pipeline-step {
+      display: flex;
+      gap: 20px;
+      padding: 16px 0;
+      align-items: flex-start;
+    }
+    .step-dot {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      flex: 1;
+      transition: border-color .2s;
+    }
+    .step-content:hover { border-color: var(--accent); }
+    .step-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .step-tags {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      font-weight: 600;
+    }
+    .tag-purple { background: rgba(108,99,255,0.2); color: #a89dff; }
+    .tag-teal   { background: rgba(78,205,196,0.2); color: var(--accent2); }
+    .tag-red    { background: rgba(255,107,107,0.2); color: #ff9999; }
+    .tag-yellow { background: rgba(255,217,61,0.2);  color: #ffe97a; }
+    .tag-green  { background: rgba(100,255,218,0.15); color: var(--green); }
+
+    /* ── Feature grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: transform .2s, border-color .2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent2);
+    }
+    .feature-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .feature-title { font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 13px; color: var(--muted); }
+
+    /* ── API Endpoints ── */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .endpoint-table th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .endpoint-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(46,51,80,0.5);
+    }
+    .endpoint-table tr:last-child td { border-bottom: none; }
+    .endpoint-table tr:hover td { background: rgba(108,99,255,0.05); }
+    .method {
+      display: inline-block;
+      font-family: 'Consolas', monospace;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .method-get  { background: rgba(100,255,218,0.15); color: var(--green); }
+    .method-post { background: rgba(108,99,255,0.2);   color: #a89dff; }
+    .path {
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .auth-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255,107,107,0.15);
+      color: #ff9999;
+    }
+    .no-auth-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(100,255,218,0.1);
+      color: var(--green);
+    }
+
+    /* ── Tech stack ── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .stack-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .stack-layer {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stack-tech {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .stack-detail {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Model perf ── */
+    .perf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .perf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    .perf-value {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .perf-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .arch-arrow { display: none; }
+      .arch-node { max-width: 100%; }
+      .pipeline::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-badge">ML Platform</div>
+  <h1>ChurnPilot AI</h1>
+  <p>Production-ready telecom customer churn prediction — FastAPI backend, async batch scoring, PSI drift monitoring, RAG assistant, and Streamlit dashboard.</p>
+  <div class="hero-links">
+    <a href="http://3.142.131.45:8501" class="btn btn-primary" target="_blank">🚀 Live Demo (Streamlit)</a>
+    <a href="http://3.142.131.45:8000/docs" class="btn btn-outline" target="_blank">📄 API Swagger Docs</a>
+    <a href="https://github.com/DaniManas/churnpilot-ai" class="btn btn-outline" target="_blank">⭐ GitHub Repo</a>
+  </div>
+</header>
+
+<!-- ── Metrics bar ── -->
+<div class="metrics-bar">
+  <div class="metric">
+    <div class="metric-value">0.84</div>
+    <div class="metric-label">ROC-AUC</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">74%</div>
+    <div class="metric-label">Churn Recall</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">77%</div>
+    <div class="metric-label">Accuracy</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">41</div>
+    <div class="metric-label">Tests Passing</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">7K+</div>
+    <div class="metric-label">Training Customers</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">AWS</div>
+    <div class="metric-label">Deployment</div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── 1. System Architecture ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2>System Architecture</h2>
+    </div>
+    <div class="arch-flow">
+      <div class="arch-node">
+        <span class="arch-node-icon">👤</span>
+        <div class="arch-node-title">User</div>
+        <div class="arch-node-sub">Browser or API client</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color: rgba(108,99,255,0.4);">
+        <span class="arch-node-icon">🎨</span>
+        <div class="arch-node-title">Streamlit UI</div>
+        <div class="arch-node-sub">Port 8501 · 5 pages</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color: rgba(78,205,196,0.4);">
+        <span class="arch-node-icon">⚡</span>
+        <div class="arch-node-title">FastAPI Backend</div>
+        <div class="arch-node-sub">Port 8000 · Auth + routing</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color: rgba(255,217,61,0.4);">
+        <span class="arch-node-icon">🤖</span>
+        <div class="arch-node-title">ML Model</div>
+        <div class="arch-node-sub">RandomForest sklearn pipeline</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color: rgba(100,255,218,0.4);">
+        <span class="arch-node-icon">💾</span>
+        <div class="arch-node-title">SQLite + FAISS</div>
+        <div class="arch-node-sub">Prediction logs + RAG index</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2. Request Flow ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2>End-to-End Prediction Flow</h2>
+    </div>
+    <div class="pipeline">
+
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(108,99,255,0.25); border: 2px solid var(--accent);">📥</div>
+        <div class="step-content">
+          <div class="step-title">1 · Request Received</div>
+          <div class="step-desc">Client sends a POST to <code>/predict</code> with customer features and the <code>X-API-Key</code> header. FastAPI validates the payload against the Pydantic schema — any missing or invalid field returns 422 immediately.</div>
+          <div class="step-tags">
+            <span class="tag tag-purple">POST /predict</span>
+            <span class="tag tag-red">X-API-Key auth</span>
+            <span class="tag tag-teal">Pydantic v2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(78,205,196,0.25); border: 2px solid var(--accent2);">🔒</div>
+        <div class="step-content">
+          <div class="step-title">2 · Auth &amp; Dependency Injection</div>
+          <div class="step-desc">FastAPI's <code>Depends(verify_api_key)</code> checks the key against the comma-separated <code>VALID_API_KEYS</code> environment variable. The DB session is also injected via <code>Depends(get_db)</code>, ensuring every request gets its own session that's automatically closed.</div>
+          <div class="step-tags">
+            <span class="tag tag-teal">Depends()</span>
+            <span class="tag tag-purple">Session lifecycle</span>
+            <span class="tag tag-yellow">Env-var keys</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(255,217,61,0.2); border: 2px solid var(--accent4);">🤖</div>
+        <div class="step-content">
+          <div class="step-title">3 · ML Inference</div>
+          <div class="step-desc">The sklearn <strong>Pipeline</strong> (StandardScaler → OrdinalEncoder → RandomForest) runs prediction in a single call — no separate preprocessing step. The model outputs both a binary label and a probability, which is translated to a risk tier (High ≥ 0.7, Medium ≥ 0.4, Low below).</div>
+          <div class="step-tags">
+            <span class="tag tag-yellow">RandomForest</span>
+            <span class="tag tag-teal">sklearn Pipeline</span>
+            <span class="tag tag-purple">class_weight='balanced'</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(100,255,218,0.15); border: 2px solid var(--green);">💾</div>
+        <div class="step-content">
+          <div class="step-title">4 · Logged to SQLite</div>
+          <div class="step-desc">Every prediction is logged to the <code>prediction_logs</code> table via SQLAlchemy ORM — storing the input features (as JSON), prediction, probability, risk label, and UTC timestamp. This powers the monitoring dashboard.</div>
+          <div class="step-tags">
+            <span class="tag tag-green">SQLAlchemy ORM</span>
+            <span class="tag tag-teal">SQLite</span>
+            <span class="tag tag-purple">JSON features</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(255,107,107,0.2); border: 2px solid var(--accent3);">📤</div>
+        <div class="step-content">
+          <div class="step-title">5 · Response Returned</div>
+          <div class="step-desc">A structured JSON response is returned: <code>prediction</code> (0/1), <code>probability</code> (0–1 float), <code>risk_label</code>, and an <code>explanation</code> string. The Streamlit UI renders this as a gauge chart with color-coded risk.</div>
+          <div class="step-tags">
+            <span class="tag tag-red">JSON response</span>
+            <span class="tag tag-yellow">Gauge chart</span>
+            <span class="tag tag-teal">Risk tier</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 3. Key Features ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2>Key Features</h2>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Single Prediction</div>
+        <div class="feature-desc">Real-time churn scoring for one customer. Sub-millisecond inference using a local sklearn pipeline — no external API calls, no latency.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Async Batch Scoring</div>
+        <div class="feature-desc">Upload a CSV of customers. A background thread scores them asynchronously while you poll for status. Download the result CSV when done.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">PSI Drift Monitoring</div>
+        <div class="feature-desc">Population Stability Index computed over a rolling window for tenure, monthly charges, and total charges. Alerts when live data drifts from training.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">RAG Knowledge Assistant</div>
+        <div class="feature-desc">Ask questions about churn drivers, model internals, or API usage. FAISS + TF-IDF retrieval over 3 knowledge docs — fully offline.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <div class="feature-title">API Key Auth</div>
+        <div class="feature-desc">Stateless authentication via X-API-Key header. Keys are read from environment variables — no database, no user management, no session state.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🐳</div>
+        <div class="feature-title">Dockerized &amp; Cloud-Ready</div>
+        <div class="feature-desc">Multi-stage Dockerfile with non-root user, health check, and volume mounts. Deployed on AWS EC2 via Docker Hub image pull.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4. API Endpoints ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2>API Endpoints</h2>
+    </div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+      <table class="endpoint-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Auth</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><span class="path">/health</span></td>
+            <td><span class="no-auth-badge">Public</span></td>
+            <td>System health — DB check, uptime, FAISS status</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><span class="path">/predict</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>Single customer churn prediction</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><span class="path">/batch</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>Submit CSV for async batch scoring</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><span class="path">/batch/{job_id}</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>Poll batch job status</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><span class="path">/batch/{job_id}/download</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>Download scored CSV result</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><span class="path">/monitor</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>PSI drift report + daily churn trend</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><span class="path">/assist</span></td>
+            <td><span class="auth-badge">API Key</span></td>
+            <td>RAG knowledge assistant query</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">All protected endpoints require the header: <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">X-API-Key: dev-key-123</code></p>
+  </section>
+
+  <!-- ── 5. Tech Stack ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2>Technology Stack</h2>
+    </div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="stack-layer">API Layer</div>
+        <div class="stack-tech">FastAPI</div>
+        <div class="stack-detail">Async, auto-docs, Pydantic v2, Uvicorn ASGI</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Machine Learning</div>
+        <div class="stack-tech">scikit-learn</div>
+        <div class="stack-detail">RandomForest + Pipeline · IBM Telco dataset</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Database</div>
+        <div class="stack-tech">SQLAlchemy + SQLite</div>
+        <div class="stack-detail">ORM for prediction logs, batch job tracking</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">RAG / Search</div>
+        <div class="stack-tech">FAISS + TF-IDF</div>
+        <div class="stack-detail">Flat L2 index · TruncatedSVD 128-dim · offline</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Frontend</div>
+        <div class="stack-tech">Streamlit + Plotly</div>
+        <div class="stack-detail">5 pages · gauge, bar, line charts</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Testing</div>
+        <div class="stack-tech">pytest (41 tests)</div>
+        <div class="stack-detail">TestClient · /tmp isolation · all passing</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Deployment</div>
+        <div class="stack-tech">Docker + AWS EC2</div>
+        <div class="stack-detail">Multi-stage build · Docker Hub · EC2 Security Groups</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-layer">Monitoring</div>
+        <div class="stack-tech">PSI Drift Detection</div>
+        <div class="stack-detail">Population Stability Index · rolling 7-day window</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. Model Performance ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2>Model Performance</h2>
+    </div>
+    <div class="perf-grid">
+      <div class="perf-card">
+        <div class="perf-value">0.84</div>
+        <div class="perf-label">ROC-AUC</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-value">74%</div>
+        <div class="perf-label">Churn Recall</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-value">55%</div>
+        <div class="perf-label">Churn Precision</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-value">77%</div>
+        <div class="perf-label">Overall Accuracy</div>
+      </div>
+    </div>
+    <div style="margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 20px;">
+      <strong style="color: var(--accent2);">Design Decision:</strong> <span style="font-size: 14px; color: var(--muted);">The model is tuned for <strong style="color: var(--text);">high recall</strong> using <code>class_weight='balanced'</code>. In churn, it's better to flag a loyal customer as at-risk (false positive) than to miss a real churner (false negative). Missing a churner costs a retention offer; a false alarm costs a courtesy call.</span>
+    </div>
+  </section>
+
+  <!-- ── 7. Batch Flow ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2>Async Batch Scoring Flow</h2>
+    </div>
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(108,99,255,0.25); border: 2px solid var(--accent);">📤</div>
+        <div class="step-content">
+          <div class="step-title">Upload CSV</div>
+          <div class="step-desc">Client uploads a CSV file via <code>POST /batch</code>. FastAPI creates a BatchJob row in SQLite with status <code>pending</code> and returns a <code>job_id</code> immediately — no waiting for scoring to finish.</div>
+          <div class="step-tags"><span class="tag tag-purple">job_id returned instantly</span></div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(78,205,196,0.25); border: 2px solid var(--accent2);">⚙️</div>
+        <div class="step-content">
+          <div class="step-title">Background Thread Scores</div>
+          <div class="step-desc">A daemon thread picks up the job, opens its own DB session (thread-safe), and runs <code>ml_service.predict_batch()</code> row by row. Each prediction is logged to <code>prediction_logs</code> for monitoring.</div>
+          <div class="step-tags"><span class="tag tag-teal">threading.Semaphore</span><span class="tag tag-green">Thread-safe DB</span></div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(255,217,61,0.2); border: 2px solid var(--accent4);">🔄</div>
+        <div class="step-content">
+          <div class="step-title">Poll for Status</div>
+          <div class="step-desc">Client polls <code>GET /batch/{job_id}</code> until status becomes <code>done</code> or <code>failed</code>. The Streamlit UI does this automatically with a spinner loop.</div>
+          <div class="step-tags"><span class="tag tag-yellow">pending → running → done</span></div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-dot" style="background: rgba(100,255,218,0.15); border: 2px solid var(--green);">⬇️</div>
+        <div class="step-content">
+          <div class="step-title">Download Results</div>
+          <div class="step-desc">Scored CSV is saved to <code>data/batch_results/</code>. Client downloads via <code>GET /batch/{job_id}/download</code> — the scored CSV includes all original columns plus <code>prediction</code>, <code>probability</code>, and <code>risk_label</code>.</div>
+          <div class="step-tags"><span class="tag tag-green">StreamingResponse</span><span class="tag tag-teal">CSV download</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Built by <a href="https://github.com/DaniManas" target="_blank">Manas Dani</a> &nbsp;·&nbsp;
+  <a href="https://github.com/DaniManas/churnpilot-ai" target="_blank">GitHub Repo</a> &nbsp;·&nbsp;
+  <a href="http://3.142.131.45:8000/docs" target="_blank">Live API Docs</a>
+</footer>
+
+</body>
+</html>

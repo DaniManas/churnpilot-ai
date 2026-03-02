@@ -52,5 +52,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 
 # Start the API server
 # --host 0.0.0.0  required inside Docker (default 127.0.0.1 is unreachable from outside)
-# --workers 2     two processes for CPU-bound inference; tune to core count
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Single worker avoids startup race conditions with SQLite table creation.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

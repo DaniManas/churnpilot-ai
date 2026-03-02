@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ── Config ────────────────────────────────────────────────────────────────────
-API_BASE  = "http://localhost:8000"
+API_BASE  = "http://127.0.0.1:8000"  # e.g. "http://127.0.0.1:8000"
 API_KEY   = "dev-key-123"
 HEADERS   = {"X-API-Key": API_KEY}
 
