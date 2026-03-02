@@ -383,22 +383,24 @@ elif page == "💬 Assistant":
     st.title("💬 Knowledge Assistant")
     st.caption("Ask anything about the platform — the model, the API, monitoring, or how churn prediction works.")
 
-    # Optional passcode gate for the Assistant page (set via Streamlit secrets)
-    if ASSISTANT_PASSCODE:
-        if "assistant_unlocked" not in st.session_state:
-            st.session_state.assistant_unlocked = False
+    # Passcode gate for the Assistant page (secret expected in Streamlit Cloud)
+    if "assistant_unlocked" not in st.session_state:
+        st.session_state.assistant_unlocked = False
 
-        if not st.session_state.assistant_unlocked:
-            st.warning("🔒 Assistant access is protected. Enter the passcode to ask questions.")
-            st.caption("Need access? Contact the project owner for the Assistant passcode.")
-            entered = st.text_input("Assistant passcode", type="password")
-            if st.button("Unlock Assistant", type="primary"):
-                if entered == ASSISTANT_PASSCODE:
-                    st.session_state.assistant_unlocked = True
-                    st.rerun()
-                else:
-                    st.error("Incorrect passcode.")
-            st.stop()
+    if not st.session_state.assistant_unlocked:
+        st.warning("🔒 Assistant access is protected. Enter the passcode to ask questions.")
+        st.caption("Need access? Contact the project owner for the Assistant passcode.")
+        entered = st.text_input("Assistant passcode", type="password")
+
+        if st.button("Unlock Assistant", type="primary"):
+            if not ASSISTANT_PASSCODE:
+                st.error("Assistant passcode is not configured on this deployment.")
+            elif entered == ASSISTANT_PASSCODE:
+                st.session_state.assistant_unlocked = True
+                st.rerun()
+            else:
+                st.error("Incorrect passcode.")
+        st.stop()
 
     # Init chat history
     if "messages" not in st.session_state:
