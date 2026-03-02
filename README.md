@@ -14,7 +14,7 @@
 
 | Service | URL |
 |---|---|
-| Streamlit UI | http://3.142.131.45:8501 |
+| Streamlit UI | https://churnpilotai.streamlit.app/ |
 | API Swagger Docs | http://3.142.131.45:8000/docs |
 | Health Check | http://3.142.131.45:8000/health |
 
@@ -153,6 +153,21 @@ Open:
 - Streamlit UI → http://localhost:8501
 - Swagger docs → http://localhost:8000/docs
 - API key for testing: `dev-key-123`
+
+---
+
+## Streamlit Cloud Secrets
+
+To protect OpenAI usage in the Assistant page, set a passcode in Streamlit Community Cloud:
+
+```toml
+ASSISTANT_PASSCODE = "your-strong-passcode"
+```
+
+Path:
+- Streamlit Community Cloud → App → `Manage app` → `Settings` → `Secrets`
+
+When this secret is set, users must enter the passcode before they can access the Assistant tab.
 
 ---
 

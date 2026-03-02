@@ -19,6 +19,7 @@ import plotly.express as px
 API_BASE  = "http://3.142.131.45:8000"  # e.g. "http://127.0.0.1:8000"
 API_KEY   = "dev-key-123"
 HEADERS   = {"X-API-Key": API_KEY}
+ASSISTANT_PASSCODE = st.secrets.get("ASSISTANT_PASSCODE", "")
 
 st.set_page_config(
     page_title="ML AI Platform",
@@ -381,6 +382,22 @@ elif page == "📊 Monitor":
 elif page == "💬 Assistant":
     st.title("💬 Knowledge Assistant")
     st.caption("Ask anything about the platform — the model, the API, monitoring, or how churn prediction works.")
+
+    # Optional passcode gate for the Assistant page (set via Streamlit secrets)
+    if ASSISTANT_PASSCODE:
+        if "assistant_unlocked" not in st.session_state:
+            st.session_state.assistant_unlocked = False
+
+        if not st.session_state.assistant_unlocked:
+            st.warning("🔒 Assistant is protected. Enter passcode to continue.")
+            entered = st.text_input("Assistant passcode", type="password")
+            if st.button("Unlock Assistant", type="primary"):
+                if entered == ASSISTANT_PASSCODE:
+                    st.session_state.assistant_unlocked = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect passcode.")
+            st.stop()
 
     # Init chat history
     if "messages" not in st.session_state:
