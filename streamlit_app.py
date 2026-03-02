@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ── Config ────────────────────────────────────────────────────────────────────
-API_BASE  = "http://127.0.0.1:8000"  # e.g. "http://127.0.0.1:8000"
+API_BASE  = "http://3.142.131.45:8000"  # e.g. "http://127.0.0.1:8000"
 API_KEY   = "dev-key-123"
 HEADERS   = {"X-API-Key": API_KEY}
 
@@ -27,7 +27,11 @@ st.set_page_config(
 )
 
 # ── Sidebar navigation ────────────────────────────────────────────────────────
-st.sidebar.image("https://img.icons8.com/color/96/artificial-intelligence.png", width=60)
+# Avoid hard failure if external image URL is unavailable in hosted environments.
+try:
+    st.sidebar.image("https://img.icons8.com/color/96/artificial-intelligence.png", width=60)
+except Exception:
+    st.sidebar.markdown("## 🤖")
 st.sidebar.title("ML AI Platform")
 st.sidebar.markdown("Customer Churn Prediction")
 st.sidebar.divider()
