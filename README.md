@@ -18,7 +18,33 @@
 | API Swagger Docs | http://3.142.131.45:8000/docs |
 | Health Check | http://3.142.131.45:8000/health |
 
-**→ [View Architecture & Flow Diagram](docs/project_flow.html)**
+---
+
+## System Architecture
+
+```mermaid
+flowchart LR
+    User(["👤 User"]):::user --> UI["🎨 Streamlit UI\nPort 8501"]:::ui
+    UI --> API["⚡ FastAPI Backend\nPort 8000"]:::api
+    API --> Auth["🔒 API Key Auth\nDepends()"]:::auth
+    Auth --> ML["🤖 ML Pipeline\nRandomForest"]:::ml
+    ML --> DB[("💾 SQLite\nPrediction Logs")]:::db
+    API --> RAG["🔍 FAISS + TF-IDF\nRAG Assistant"]:::rag
+    RAG --> DB
+    API --> Monitor["📈 PSI Monitor\nDrift Detection"]:::monitor
+    Monitor --> DB
+
+    classDef user    fill:#2d2d44,stroke:#6c63ff,color:#e8eaf6
+    classDef ui      fill:#1e2a3a,stroke:#6c63ff,color:#e8eaf6
+    classDef api     fill:#1a2a2a,stroke:#4ecdc4,color:#e8eaf6
+    classDef auth    fill:#2a1e2a,stroke:#ff6b6b,color:#e8eaf6
+    classDef ml      fill:#2a2a1a,stroke:#ffd93d,color:#e8eaf6
+    classDef db      fill:#1a2a1a,stroke:#64ffda,color:#e8eaf6
+    classDef rag     fill:#1e2a2a,stroke:#4ecdc4,color:#e8eaf6
+    classDef monitor fill:#2a1a1a,stroke:#ff6b6b,color:#e8eaf6
+```
+
+> **→ Want the full visual walkthrough?** Enable [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-github-pages) on this repo and visit `https://danimanas.github.io/churnpilot-ai/docs/project_flow.html`
 
 ---
 
@@ -223,7 +249,8 @@ ml-ai-platform/
 │   └── batch_results/       # Scored CSVs (gitignored)
 ├── tests/                   # 41 pytest tests
 ├── docs/
-│   └── project_flow.html    # Architecture diagram
+│   ├── project_flow.html    # Architecture diagram (GitHub Pages)
+│   └── project_flow.pdf     # Architecture diagram (PDF)
 ├── streamlit_app.py         # Streamlit frontend
 ├── Dockerfile
 ├── docker-compose.yml
