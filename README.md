@@ -18,6 +18,11 @@
 | API Swagger Docs | http://3.142.131.45:8000/docs |
 | Health Check | http://3.142.131.45:8000/health |
 
+Note:
+- The backend is also hosted on AWS EC2.
+- To control costs, the EC2 instance may not be running 24/7.
+- The Streamlit Assistant feature is passcode-protected. Contact me for access.
+
 ---
 
 ## System Architecture

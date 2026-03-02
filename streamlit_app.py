@@ -389,7 +389,8 @@ elif page == "💬 Assistant":
             st.session_state.assistant_unlocked = False
 
         if not st.session_state.assistant_unlocked:
-            st.warning("🔒 Assistant is protected. Enter passcode to continue.")
+            st.warning("🔒 Assistant access is protected. Enter the passcode to ask questions.")
+            st.caption("Need access? Contact the project owner for the Assistant passcode.")
             entered = st.text_input("Assistant passcode", type="password")
             if st.button("Unlock Assistant", type="primary"):
                 if entered == ASSISTANT_PASSCODE:
