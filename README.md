@@ -161,18 +161,11 @@ Open:
 
 ---
 
-## Streamlit Cloud Secrets
+## Assistant Access
 
-To protect OpenAI usage in the Assistant page, set a passcode in Streamlit Community Cloud:
+In order to ask questions to the Assistant about churn prediction, the user needs a passcode.
 
-```toml
-ASSISTANT_PASSCODE = "your-strong-passcode"
-```
-
-Path:
-- Streamlit Community Cloud → App → `Manage app` → `Settings` → `Secrets`
-
-When this secret is set, users must enter the passcode before they can access the Assistant tab.
+Please contact me for the passcode.
 
 ---
 
